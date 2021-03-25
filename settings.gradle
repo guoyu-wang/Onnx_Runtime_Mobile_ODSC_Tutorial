@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name = "Onnx_Runtime_Mobile_Image_Classifier"
