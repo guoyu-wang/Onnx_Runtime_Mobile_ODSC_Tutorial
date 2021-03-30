@@ -3,6 +3,8 @@
 ## Overview
 Tutorial for ODSC East 2021, "ML Inference on Mobile Device With Onnx Runtime"
 
+- [Slides for this tutorial](files/ODSC_ML_inference_on_Mobile_with_ONNX_Runtime.pdf)
+
 This demo Android image classification app is loosely based on [Google CodeLabs - Getting Started with CameraX](https://codelabs.developers.google.com/codelabs/camerax-getting-started), with all the UI components, image analysis class, pre/post processing functionalities ready to use.
 
 In this workshop, we will integrate [Onnx Runtime Mobile](https://github.com/microsoft/onnxruntime) and [MobileNet V2](https://pytorch.org/hub/pytorch_vision_mobilenet_v2/) into this demo app to perform image classification.
