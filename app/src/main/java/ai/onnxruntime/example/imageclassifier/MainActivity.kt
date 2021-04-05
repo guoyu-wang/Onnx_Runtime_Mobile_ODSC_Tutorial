@@ -1,5 +1,6 @@
 package ai.onnxruntime.example.imageclassifier
 
+import ai.onnxruntime.*
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -18,6 +19,8 @@ class MainActivity : AppCompatActivity() {
     private val backgroundExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
     private val labelData: List<String> by lazy { readLabels() }
 
+
+    private var ortEnv: OrtEnvironment? = null
     private var imageCapture: ImageCapture? = null
     private var imageAnalysis: ImageAnalysis? = null
     private var enableQuantizedModel: Boolean = false
@@ -27,10 +30,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         // Request Camera permission
         if (allPermissionsGranted()) {
+            ortEnv = OrtEnvironment.getEnvironment()
             startCamera()
         } else {
             ActivityCompat.requestPermissions(
-                    this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
 
@@ -38,8 +42,8 @@ class MainActivity : AppCompatActivity() {
             enableQuantizedModel = isChecked
             imageAnalysis?.clearAnalyzer()
             imageAnalysis?.setAnalyzer(
-                    backgroundExecutor,
-                    ORTAnalyzer(::updateUI)
+                backgroundExecutor,
+                ORTAnalyzer(createOrtSession(), ::updateUI)
             )
         }
     }
@@ -52,30 +56,30 @@ class MainActivity : AppCompatActivity() {
 
             // Preview
             val preview = Preview.Builder()
-                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                    .build()
-                    .also {
-                        it.setSurfaceProvider(viewFinder.surfaceProvider)
-                    }
+                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                .build()
+                .also {
+                    it.setSurfaceProvider(viewFinder.surfaceProvider)
+                }
 
             imageCapture = ImageCapture.Builder()
-                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                    .build()
+                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                .build()
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             imageAnalysis = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also {
-                        it.setAnalyzer(backgroundExecutor, ORTAnalyzer(::updateUI))
-                    }
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also {
+                    it.setAnalyzer(backgroundExecutor, ORTAnalyzer(createOrtSession(), ::updateUI))
+                }
 
             try {
                 cameraProvider.unbindAll()
 
                 cameraProvider.bindToLifecycle(
-                        this, cameraSelector, preview, imageCapture, imageAnalysis
+                    this, cameraSelector, preview, imageCapture, imageAnalysis
                 )
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
@@ -90,21 +94,22 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         backgroundExecutor.shutdown()
+        ortEnv?.close()
     }
 
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<out String>,
-            grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
             } else {
                 Toast.makeText(
-                        this,
-                        "Permissions not granted by the user.",
-                        Toast.LENGTH_SHORT
+                    this,
+                    "Permissions not granted by the user.",
+                    Toast.LENGTH_SHORT
                 ).show()
                 finish()
             }
@@ -137,17 +142,19 @@ class MainActivity : AppCompatActivity() {
 
     // Read ort model into a ByteArray
     private fun readModel(): ByteArray {
-        // TODO, add implementation
-        return byteArrayOf()
+        val modelID =
+            if (enableQuantizedModel) R.raw.mobilenet_v2_uint8 else R.raw.mobilenet_v2_float
+        return resources.openRawResource(modelID).readBytes()
     }
 
     // Read MobileNet V2 classification labels
     private fun readLabels(): List<String> {
-        // TODO, add implementation
-        return emptyList()
+        return resources.openRawResource(R.raw.labels).bufferedReader().readLines()
     }
 
-    // TODO, add createOrtSession()
+    private fun createOrtSession(): OrtSession? {
+        return ortEnv?.createSession(readModel())
+    }
 
     companion object {
         public const val TAG = "ORTImageClassifier"

@@ -12,10 +12,10 @@ const val IMAGE_SIZE_Y = 224;
 
 fun preProcess(bitmap: Bitmap): FloatBuffer {
     val imgData = FloatBuffer.allocate(
-            DIM_BATCH_SIZE
-                    * DIM_PIXEL_SIZE
-                    * IMAGE_SIZE_X
-                    * IMAGE_SIZE_Y
+        DIM_BATCH_SIZE
+                * DIM_PIXEL_SIZE
+                * IMAGE_SIZE_X
+                * IMAGE_SIZE_Y
     )
     imgData.rewind()
     val stride = IMAGE_SIZE_X * IMAGE_SIZE_Y
@@ -122,10 +122,10 @@ private fun imageToByteBuffer(image: ImageProxy, outputBuffer: ByteArray, pixelC
             imageCrop
         } else {
             Rect(
-                    imageCrop.left / 2,
-                    imageCrop.top / 2,
-                    imageCrop.right / 2,
-                    imageCrop.bottom / 2
+                imageCrop.left / 2,
+                imageCrop.top / 2,
+                imageCrop.right / 2,
+                imageCrop.bottom / 2
             )
         }
 
@@ -153,7 +153,7 @@ private fun imageToByteBuffer(image: ImageProxy, outputBuffer: ByteArray, pixelC
         for (row in 0 until planeHeight) {
             // Move buffer position to the beginning of this row
             planeBuffer.position(
-                    (row + planeCrop.top) * rowStride + planeCrop.left * pixelStride
+                (row + planeCrop.top) * rowStride + planeCrop.left * pixelStride
             )
 
             if (pixelStride == 1 && outputStride == 1) {
