@@ -89,11 +89,17 @@ internal class ORTAnalyzer(
                     val output = ortSession?.run(Collections.singletonMap(inputName, tensor))
                     output.use {
                         result.processTimeMs = SystemClock.uptimeMillis() - startTime
-                        val rawOutput = ((output?.get(0)?.value) as Array<FloatArray>)[0]
-                        val probabilities = softMax(rawOutput)
-                        result.detectedIndices = getTop3(probabilities)
-                        for (idx in result.detectedIndices) {
-                            result.detectedScore.add(probabilities[idx])
+                        val outputValue = output?.get(0)?.value
+                        if( outputValue != null) {
+                            val floatOutput = outputValue as Array<FloatArray>
+                            if (!floatOutput.isEmpty()){
+                                val rawOutput = floatOutput[0]
+                                val probabilities = softMax(rawOutput)
+                                result.detectedIndices = getTop3(probabilities)
+                                for (idx in result.detectedIndices) {
+                                    result.detectedScore.add(probabilities[idx])
+                                }
+                            }
                         }
                     }
                 }
